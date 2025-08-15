@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Packet Sniffer</title>
+<style>
+  body { background: #121212; color: #eee; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+  h1 { padding: 10px; }
+  #controls {
+    padding: 10px;
+    background: #222;
+    margin-bottom: 10px;
+  }
+  #controls button, #controls input {
+    margin-right: 10px;
+    font-size: 14px;
+  }
+  #status {
+    margin-left: 20px;
+    color: #0f0;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 12px; border-bottom: 1px solid #333; font-size: 14px; }
+  th { background: #222; position: sticky; top: 0; }
+  tbody tr:hover { background: #333; }
+  #packetTableContainer { height: 80vh; overflow-y: scroll; }
+</style>
+</head>
+<body>
+
+<h1>Live Packet Sniffer</h1>
+
+<div id="controls">
+  <button id="startBtn">Start Sniffing</button>
+  <button id="stopBtn">Stop Sniffing</button>
+  <label style="color:#eee;">
+    Delay (seconds):
+    <input type="number" id="delayInput" value="0" min="0" step="0.1" style="width:60px;" />
+  </label>
+  <button id="setDelayBtn">Set Delay</button>
+  <span id="status">Status: stopped</span>
+</div>
+
+<div id="packetTableContainer">
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Source IP</th>
+        <th>Destination IP</th>
+        <th>Protocol</th>
+        <th>Payload (truncated)</th>
+      </tr>
+    </thead>
+    <tbody id="packetsBody">
+    </tbody>
+  </table>
+</div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+  const socket = io();
+
+  const packetsBody = document.getElementById('packetsBody');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const delayInput = document.getElementById('delayInput');
+  const setDelayBtn = document.getElementById('setDelayBtn');
+  const statusSpan = document.getElementById('status');
+
+  socket.on('new_packet', function(packet) {
+    const row = document.createElement('tr');
+
+    const timestampCell = document.createElement('td');
+    timestampCell.textContent = packet.timestamp;
+    row.appendChild(timestampCell);
+
+    const srcCell = document.createElement('td');
+    srcCell.textContent = packet.src_ip;
+    row.appendChild(srcCell);
+
+    const dstCell = document.createElement('td');
+    dstCell.textContent = packet.dst_ip;
+    row.appendChild(dstCell);
+
+    const protoCell = document.createElement('td');
+    protoCell.textContent = packet.protocol;
+    row.appendChild(protoCell);
+
+    const payloadCell = document.createElement('td');
+    payloadCell.textContent = packet.payload || "";
+    row.appendChild(payloadCell);
+
+    packetsBody.appendChild(row);
+
+    // Auto scroll to bottom
+    const container = document.getElementById('packetTableContainer');
+    container.scrollTop = container.scrollHeight;
+  });
+
+  startBtn.addEventListener('click', () => {
+    socket.emit('start_sniff');
+  });
+
+  stopBtn.addEventListener('click', () => {
+    socket.emit('stop_sniff');
+  });
+
+  setDelayBtn.addEventListener('click', () => {
+    const delayValue = parseFloat(delayInput.value);
+    if (!isNaN(delayValue) && delayValue >= 0) {
+      socket.emit('set_delay', { delay: delayValue });
+    }
+  });
+
+  socket.on('sniffer_status', data => {
+    statusSpan.textContent = `Status: ${data.status}`;
+  });
+</script>
+
+</body>
+</html>
