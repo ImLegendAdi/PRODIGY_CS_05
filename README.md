@@ -69,8 +69,8 @@ Built with **HTML + TailwindCSS + JavaScript**, this tool provides an engaging U
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YourUsername/RealTimeStatusTool.git
-   cd RealTimeStatusTool
+   git clone https://github.com/ImLegendAdi/PRODIGY_CS_05.git
+   cd 'Packet Sniffer'
 
    start index.html   # On Windows
 
